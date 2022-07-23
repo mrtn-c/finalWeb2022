@@ -1,0 +1,31 @@
+package modelo.academico.plan;
+
+import java.util.List;
+
+import ar.edu.iua.modelo.Objeto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+@JsonSubTypes({@JsonSubTypes.Type(value = PlanImpl.class, name = "PlanImpl")})
+public abstract class AnioPlan extends Objeto {
+
+    //abstract public Plan getPlan();
+
+    //abstract void setPlan(Plan plan);
+
+    abstract public Integer getNumero();
+
+    abstract public void setNumero(Integer numero);
+
+    abstract public String getNombre();
+
+    abstract public void setNombre(String nombre);
+
+    abstract public List<Materia> getMaterias();
+
+    abstract public void setMaterias(List<Materia> materias);
+
+}
