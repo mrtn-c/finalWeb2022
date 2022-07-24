@@ -320,25 +320,28 @@ public class GenerarEjemplosDePlanes {
                 break;
         }
         
-        BufferedReader in = null; 
+        BufferedReader inM = null;
+        BufferedReader inP = null;
         aux = random.nextInt(3); //random para elegir archivo a leer
         try {
             switch(aux){
                 case 0:
-                    in = new BufferedReader(new InputStreamReader(new FileInputStream("/home/tintin/INTELIJ/final/final/src/main/java/recurso/materias1.txt"), "utf-8"));
+                    inM = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/java/recurso/materias1.txt"), "utf-8"));
                     break;
                 case 1:
-                    in = new BufferedReader(new InputStreamReader(new FileInputStream("/home/tintin/INTELIJ/final/final/src/main/java/recurso/materias1.txt"), "utf-8"));
+                    inM = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/java/recurso/materias2.txt"), "utf-8"));
                     break;
                 default:
-                    in = new BufferedReader(new InputStreamReader(new FileInputStream("/home/tintin/INTELIJ/final/final/src/main/java/recurso/materias1.txt"), "utf-8"));
+                    inM = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/java/recurso/materias3.txt"), "utf-8"));
                     break;
             }
+            inP = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/java/recurso/preceptores.txt"), "utf-8"));
+
             int codigo_materia = 1;
-            
             for(int i = 1; i<6; i++){
                 
                 AnioPlan anio_plan = null;
+                String linea;
                 switch(i){
                     case 1:
                         anio_plan = new AnioPlan( i, "Primer año");
@@ -356,24 +359,9 @@ public class GenerarEjemplosDePlanes {
                         anio_plan = new AnioPlan(i, "Quinto año");
                         break;
                 }
-                
-                String linea;
-                
-                
-                
-
-                while((linea=in.readLine())!=null && !linea.equals("zzz")){
-                    anio_plan.getMaterias().add(new Materia(anio_plan, codigo_materia++, linea,(double) (random.nextInt(6)+1)));
-
-                }
-
-                in = new BufferedReader(new InputStreamReader(new FileInputStream("/home/tintin/INTELIJ/final/final/src/main/java/recurso/preceptores.txt"), "utf-8"));
 
                 aux = 0;
-
-
-                 while ((linea = in.readLine())!=null && !linea.equals("zzz")){
-
+                while ((linea = inP.readLine())!=null && !linea.equals("zzz")){
                     switch (aux){
                         case 0:
                             anio_plan.getPreceptor().setNombre(linea);
@@ -386,7 +374,22 @@ public class GenerarEjemplosDePlanes {
                             break;
                     }
                     aux++;
-                 }
+                }
+
+                
+                
+                
+
+                while((linea=inM.readLine())!=null && !linea.equals("zzz")){
+                    anio_plan.getMaterias().add(new Materia(anio_plan, codigo_materia++, linea,(double) (random.nextInt(6)+1)));
+
+                }
+
+
+
+
+
+
 
 
 
@@ -399,7 +402,7 @@ public class GenerarEjemplosDePlanes {
         } catch (Exception ex){
             ex.printStackTrace();
         } finally {
-            in.close();
+            inM.close();
         }
         
         

@@ -21,7 +21,7 @@ public class BuscarPlanesImpl implements BuscarPlanes {
         terminos = Normalizador.cleanString(terminos);
         List<String>palabras = Arrays.asList(terminos.split("\\s+"));
 
-        if(terminos.equals("all")){
+        if(terminos.contains("all")){
             for(Plan plan : BaseDeDatos.planes){
                 encontrado(planes,plan);
             }

@@ -60,10 +60,14 @@ public class APIHandler implements HttpHandler {
 
 
         if (verb.equals("GET")){
-            body = null;
+            body = " ";
+            String parametros = null;
             try {
                 List<Plan> planes = new ArrayList<>();
-                planes = buscarPlanes(params.get("anio")); //HACER MAS COMPLETO
+                for(String aux : params.values()){
+                    parametros = parametros + " " + aux;
+                }
+                planes = buscarPlanes(parametros); //HACER MAS COMPLETO
                 body = "{ \"planes\": " + mapper.writeValueAsString(planes) + "}";
                 BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
             } catch (BuscarPlanEx e ) {
@@ -75,20 +79,24 @@ public class APIHandler implements HttpHandler {
 
         if(verb.equals("DELETE")){
                 try {
+                    String parametros = null;
                     List<Plan> planes = new ArrayList<>();
-                    planes = buscarPlanes(params.get("anio"));
+                    for(String aux : params.values()){
+                        parametros = parametros + " " + aux;
+                    }
+                    planes = buscarPlanes(parametros);
                     BorrarPlanes borrarPlanes = new BorrarPlanesImpl();
                     borrarPlanes.borrar(planes);
                     BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
                 } catch (BuscarPlanEx | BorrarPlanEx e) {
                     throw new RuntimeException(e);
                 }
-
         }
 
         if(verb.equals("PUT")){
             System.out.println("PUT");
             List<Plan> plan = new ArrayList<Plan>();
+
             plan = Arrays.asList(mapper.readValue(body, Plan[].class));
             try {
                 ModificarPlan modificarPlan = new ModificarPlanImpl();
@@ -106,15 +114,25 @@ public class APIHandler implements HttpHandler {
 
         if(verb.equals("POST")){
             System.out.println("POST");
-            List<Plan> plan = new ArrayList<Plan>();
-            plan = Arrays.asList(mapper.readValue(body, Plan[].class));
+
             CrearPlan crearPlan = new CrearPlanImpl();
             try {
-                for(Plan planAux : plan){
-                    crearPlan.crear(planAux);
+
+                if(body.startsWith("[")){
+                    List<Plan> plan = new ArrayList<Plan>();
+                    plan = Arrays.asList(mapper.readValue(body, Plan[].class));
+                    for(Plan planAux : plan){
+                        crearPlan.crear(planAux);
+                        body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
+                        BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                    } //Podria usar el crear planes, mando todo, pero para ir viendo...
+                } else {
+                    Plan plan = mapper.readValue(body, Plan.class);
+                    crearPlan.crear(plan);
                     body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
                     BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
-                } //Podria usar el crear planes, mando todo, pero para ir viendo...
+                }
+
             } catch (CrearPlanEx e ) {
                 throw new RuntimeException(e.toString());
             } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
