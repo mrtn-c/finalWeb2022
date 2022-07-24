@@ -5,13 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
-import java.util.Map;
 
 import excepciones.BorrarPlanEx;
 import excepciones.BuscarPlanEx;
@@ -31,7 +28,6 @@ public class APIHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
 
-        System.out.println("Entro handle");
         requestCount++;
 
         // ---
@@ -39,14 +35,10 @@ public class APIHandler implements HttpHandler {
         String protocol = exchange.getProtocol();
         String verb = exchange.getRequestMethod();
         String contextPath = exchange.getHttpContext().getPath();
-
         URI uri = exchange.getRequestURI();
-
         String path = uri.toString().replaceFirst(contextPath, "");
         Map<String, String> params = readParamsQuery(path);
-
         String body = readBody(exchange);
-
         System.out.println("------------------------------------------------------");
         System.out.println("REQUEST #" + requestCount + ":");
         // System.out.println("\tCX PATH: " + contextPath);
@@ -57,7 +49,6 @@ public class APIHandler implements HttpHandler {
         System.out.println("\tPATH: " + path);
         System.out.println("\tPARAMETERS COUNT: " + params.size());
         //System.out.println("\tURI: " + uri);
-        System.out.println("\tBODY:\n" + body);
         if(exchange.getRequestHeaders().containsKey("Content-Type")){
             System.out.println(exchange.getRequestHeaders().get("Content-Type").toString());
         }
@@ -70,28 +61,22 @@ public class APIHandler implements HttpHandler {
 
         if (verb.equals("GET")){
             body = null;
-            if (path.contains("/planes/")){
-                String[] pathSplit = path.split("/");
-                try {
-                    List<Plan> planes = new ArrayList<>();
-                    planes = buscarPlanes(pathSplit[2]);
-                    body = "{ \"planes\": " + mapper.writeValueAsString(planes) + "}";
-                    BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
-                } catch (BuscarPlanEx e ) {
-                    throw new RuntimeException(e.toString());
-                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                    System.out.println(e.toString());
-                    throw new RuntimeException(e.toString());
-                }
+            try {
+                List<Plan> planes = new ArrayList<>();
+                planes = buscarPlanes(params.get("anio")); //HACER MAS COMPLETO
+                body = "{ \"planes\": " + mapper.writeValueAsString(planes) + "}";
+                BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+            } catch (BuscarPlanEx e ) {
+                throw new RuntimeException(e.toString());
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                throw new RuntimeException(e.toString());
             }
         }
 
         if(verb.equals("DELETE")){
-                System.out.println("POST");
-                String[] pathSplit = path.split("/");
                 try {
                     List<Plan> planes = new ArrayList<>();
-                    planes = buscarPlanes(pathSplit[2]);
+                    planes = buscarPlanes(params.get("anio"));
                     BorrarPlanes borrarPlanes = new BorrarPlanesImpl();
                     borrarPlanes.borrar(planes);
                     BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
@@ -103,28 +88,33 @@ public class APIHandler implements HttpHandler {
 
         if(verb.equals("PUT")){
             System.out.println("PUT");
-            String[] pathSplit = path.split("/");
-            Plan plan = mapper.readValue(body, Plan.class);
+            List<Plan> plan = new ArrayList<Plan>();
+            plan = Arrays.asList(mapper.readValue(body, Plan[].class));
             try {
                 ModificarPlan modificarPlan = new ModificarPlanImpl();
-                if (modificarPlan.modificar(plan)) {
-                    System.out.println("Plan " + plan.getAnio() + " modificado");
-                    BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
-                }
+                for(Plan planAux : plan){
+                    if (modificarPlan.modificar(planAux)) {
+                        System.out.println("Plan " + planAux.getAnio() + " modificado");
+                        BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                    }
+                } //Podria usar el modificar planes, mando todo, pero para ir viendo...
+
             } catch(ModificarPlanEx e){
                 throw new RuntimeException(e);
                 }
             }
 
-            if(verb.equals("POST")){
+        if(verb.equals("POST")){
             System.out.println("POST");
-            Plan plan = mapper.readValue(body, Plan.class);
-
+            List<Plan> plan = new ArrayList<Plan>();
+            plan = Arrays.asList(mapper.readValue(body, Plan[].class));
             CrearPlan crearPlan = new CrearPlanImpl();
             try {
-                crearPlan.crear(plan);
-                body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
-                BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                for(Plan planAux : plan){
+                    crearPlan.crear(planAux);
+                    body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
+                    BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                } //Podria usar el crear planes, mando todo, pero para ir viendo...
             } catch (CrearPlanEx e ) {
                 throw new RuntimeException(e.toString());
             } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
@@ -139,7 +129,6 @@ public class APIHandler implements HttpHandler {
 
     private void executeResponse(HttpExchange exchange, Map<String, String> params, String body) throws IOException {
 
-        System.out.println("Entro executeResponse");
         if (!exchange.getRequestHeaders().containsKey("Content-Type") || exchange.getRequestHeaders().get("Content-Type").equals("application/json")) {
             String msg = "415 Unsupported Media Type: Usted debe enviar un header Content-Type = application/json";
             exchange.sendResponseHeaders(415, msg.length());
