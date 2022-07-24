@@ -93,54 +93,60 @@ public class APIHandler implements HttpHandler {
                 }
         }
 
-        if(verb.equals("PUT")){
+        if(verb.equals("PUT")) {
             System.out.println("PUT");
-            List<Plan> plan = new ArrayList<Plan>();
-
-            plan = Arrays.asList(mapper.readValue(body, Plan[].class));
+            ModificarPlan modificarPlan = new ModificarPlanImpl();
             try {
-                ModificarPlan modificarPlan = new ModificarPlanImpl();
-                for(Plan planAux : plan){
-                    if (modificarPlan.modificar(planAux)) {
-                        System.out.println("Plan " + planAux.getAnio() + " modificado");
-                        BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
-                    }
-                } //Podria usar el modificar planes, mando todo, pero para ir viendo...
-
-            } catch(ModificarPlanEx e){
-                throw new RuntimeException(e);
-                }
-            }
-
-        if(verb.equals("POST")){
-            System.out.println("POST");
-
-            CrearPlan crearPlan = new CrearPlanImpl();
-            try {
-
-                if(body.startsWith("[")){
+                if (body.startsWith("[")) {
                     List<Plan> plan = new ArrayList<Plan>();
                     plan = Arrays.asList(mapper.readValue(body, Plan[].class));
-                    for(Plan planAux : plan){
-                        crearPlan.crear(planAux);
-                        body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
-                        BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
-                    } //Podria usar el crear planes, mando todo, pero para ir viendo...
+                    for (Plan planAux : plan) {
+                        if (modificarPlan.modificar(planAux)) {
+                            System.out.println("Plan " + planAux.getAnio() + " modificado");
+                            BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                        }
+                    }
                 } else {
                     Plan plan = mapper.readValue(body, Plan.class);
-                    crearPlan.crear(plan);
-                    body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
+                    modificarPlan.modificar(plan);
                     BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
                 }
+                //Podria usar el modificar planes, mando todo, pero para ir viendo...
+            } catch (ModificarPlanEx e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-            } catch (CrearPlanEx e ) {
-                throw new RuntimeException(e.toString());
-            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                System.out.println(e.toString());
-                throw new RuntimeException(e.toString());
+            if (verb.equals("POST")) {
+                System.out.println("POST");
+
+                CrearPlan crearPlan = new CrearPlanImpl();
+                try {
+
+                    if (body.startsWith("[")) {
+                        List<Plan> plan = new ArrayList<Plan>();
+                        plan = Arrays.asList(mapper.readValue(body, Plan[].class));
+                        for (Plan planAux : plan) {
+                            crearPlan.crear(planAux);
+                            body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
+                            BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                        } //Podria usar el crear planes, mando todo, pero para ir viendo...
+                    } else {
+                        Plan plan = mapper.readValue(body, Plan.class);
+                        crearPlan.crear(plan);
+                        body = "{ \"plan\": " + mapper.writeValueAsString(plan) + "}";
+                        BuscarEImprimirPlanesImpl.imprimirPlanes(BaseDeDatos.planes);
+                    }
+
+                } catch (CrearPlanEx e) {
+                    throw new RuntimeException(e.toString());
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    System.out.println(e.toString());
+                    throw new RuntimeException(e.toString());
+                }
+
             }
 
-        }
         executeResponse(exchange, params, body);
 
     }// end handle()
